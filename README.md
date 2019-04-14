@@ -1,8 +1,15 @@
 
-# HDAuthenticator
+# HDAuthenticator サンプルコード
 
-HD(Hierarchy Deterministic) にキーペアを生成する Authenticator。
-サンプルなのでサインしかできない。
+技術書典6 で配布した、WebAuthn Maniacs 第4章のサンプルコードです。
+
+jupyterlab でも書かれているので、実際にコードを動作させて遊んでいただけます。
+
+```sh
+pip install pipenv
+pipenv install
+pipenv run jupyter-lab
+```
 
 ## ecdsa を使ってみる
 ecdsa のライブラリは `pip install ecdsa` でインストールする。
@@ -34,7 +41,7 @@ print("verified: ", pubkey.verify(sign, data))
 ```
 
     prikey:  1bab84e687e36514eeaf5a017c30d32c1f59dd4ea6629da7970ca374513dd006
-    sign  :  0308eb0ab7cdc21373a0b0ff11068f419b10921e48451f6afd429bf7a519c2bfa224bf10a847891971fbfba5e3895d6c91959335ef093065a1d314c39e91fe0c
+    sign  :  3e142e7cbeffb4502e022cb2e885086752cfc1beed066e03c7e00aee6a99e3b98a7a7913eaf6968fac16454f030ea6b40516b1f267bd7a5a77d850b242001624
     pub   :  18684cfb6aefc8a7e4c08b4bad03fcd167c6e7401fe80997e8298f9f174cfe321bf0e1edbae7b3f1f1942eefcaf0a3bedb85829c2ece5da9526071ca88be21fc
     verified:  True
     
@@ -399,33 +406,38 @@ print("======== master_key ==========")
 
 master_key.print_debug()
 
+print("======== pubkey_seed ==========")
 
 pubkey_seed = master_key.pubkey_seed()
 
-
-print("======== pubkey_seed ==========")
-
 pubkey_seed.print_debug()
 
-print("======== pubkey ==========")
+print("======== app_pubkey ==========")
 
 appid = 'https://example.com'
 
 appid_hash = hashlib.sha256(appid.encode()).digest()
 
-pubkey=pubkey_seed.app_pubkey(appid_hash)
+app_pubkey=pubkey_seed.app_pubkey(appid_hash)
 
-pubkey.print_debug()
+app_pubkey.print_debug()
 
 print("======== private key ==========")
 
-prikey = master_key.app_prikey(pubkey.credid, appid_hash)
+prikey = master_key.app_prikey(app_pubkey.credid, appid_hash)
 
-keyid = pubkey_seed.keyid + pubkey.keyid
+prikey.print_debug()
 
-source = 'hello'
+source = 'nonce'.encode()
+sign = prikey.sign(source)
+result = app_pubkey.verify(sign, source)
 
-pubkey.verify(prikey.sign(source.encode()), source.encode())
+print("========   result   ==========")
+
+print('souce :','nonce')
+print('pubkey:', app_pubkey.pubkey.to_string().hex())
+print('sign  :', sign.hex())
+print('result:', result)
 
 ```
 
